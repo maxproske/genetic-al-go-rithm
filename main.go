@@ -36,7 +36,7 @@ func main() {
 
 	// Check what best performing, most reliable renderer SDL is using
 	// (direct3d on windows, opengl on linux, or software for just sdl)
-	sdl.LogSetAllPriority(sdl.LOG_PRIORITY_VERBOSE)
+	// sdl.LogSetAllPriority(sdl.LOG_PRIORITY_VERBOSE)
 
 	// Initialize SDL2.
 	err := sdl.Init(sdl.INIT_EVERYTHING)
@@ -61,19 +61,6 @@ func main() {
 		return
 	}
 	defer renderer.Destroy()
-
-	// Create audio state.
-	/*
-		var audioSpec sdl.AudioSpec
-		explosionBytes, _ := sdl.LoadWAV("explode.wav")
-		audioID, err := sdl.OpenAudioDevice("", false, &audioSpec, nil, 0)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		defer sdl.FreeWAV(explosionBytes)
-		audioState := audioState{explosionBytes, audioID, &audioSpec}
-	*/
 
 	// Set hints.
 	sdl.SetHint(sdl.HINT_RENDER_SCALE_QUALITY, "1")

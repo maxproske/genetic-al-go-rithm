@@ -106,6 +106,77 @@ func (double *DoubleNode) NodeCounts() (nodeCount, nilCount int) {
 	return 1 + leftCount + rightCount, leftNilCount + rightNilCount // +1 is ourselves
 }
 
+// TripleNode has two children
+type TripleNode struct {
+	LeftChild   Node
+	MiddleChild Node
+	RightChild  Node
+}
+
+// AddRandom fulfills TripleNode interface
+func (triple *TripleNode) AddRandom(node Node) {
+	// We have a choice of adding it to three children
+	r := rand.Intn(3)
+	if r == 0 {
+		// Add left node
+		if triple.LeftChild == nil {
+			triple.LeftChild = node
+		} else {
+			triple.LeftChild.AddRandom(node)
+		}
+	} else if r == 1 {
+		// Add middle node
+		if triple.MiddleChild == nil {
+			triple.MiddleChild = node
+		} else {
+			triple.MiddleChild.AddRandom(node)
+		}
+	} else {
+		// Do not add a node to a constant node
+		if triple.RightChild == nil {
+			triple.RightChild = node
+		} else {
+			triple.RightChild.AddRandom(node)
+		}
+	}
+}
+
+// NodeCounts fulfills TripleNode interface
+func (triple *TripleNode) NodeCounts() (nodeCount, nilCount int) {
+	var leftCount, leftNilCount, middleCount, middleNilCount, rightCount, rightNilCount int
+	// Handle left branch
+	if triple.LeftChild == nil {
+		// No left child
+		leftNilCount = 1
+		leftCount = 0
+	} else {
+		// There is a left child
+		leftCount, leftNilCount = triple.LeftChild.NodeCounts()
+	}
+
+	// Handle middle branch
+	if triple.MiddleChild == nil {
+		// No middle child
+		middleNilCount = 1
+		middleCount = 0
+	} else {
+		// There is a middle child
+		middleCount, middleNilCount = triple.MiddleChild.NodeCounts()
+	}
+
+	// Handle right branch
+	if triple.RightChild == nil {
+		// No right child
+		rightNilCount = 1
+		rightCount = 0
+	} else {
+		// There is a right child
+		rightCount, rightNilCount = triple.RightChild.NodeCounts()
+	}
+
+	return 1 + leftCount + middleCount + rightCount, leftNilCount + middleNilCount + rightNilCount // + 1 is ourself
+}
+
 // OpConstant represents a constant value
 type OpConstant struct {
 	LeafNode
@@ -277,10 +348,27 @@ func (op *OpNoise) String() string {
 	return "( SimplexNoise " + op.LeftChild.String() + " " + op.RightChild.String() + " )"
 }
 
+// OpLerp interpolates between two nodes (and a percentage)
+type OpLerp struct {
+	TripleNode
+}
+
+// Eval fulfills OpLerp interface
+func (op *OpLerp) Eval(x, y float32) float32 {
+	b1 := op.LeftChild.Eval(x, y)
+	b2 := op.MiddleChild.Eval(x, y)
+	pct := float32(math.Abs(float64(op.RightChild.Eval(x, y))))
+	return b1 + pct*(b1-b2)
+}
+
+func (op *OpLerp) String() string {
+	return "( Lerp " + op.LeftChild.String() + " " + op.MiddleChild.String() + " " + op.RightChild.String() + " )"
+}
+
 // GetRandomNode selects a random node with 1 or more children
 func GetRandomNode() Node {
 	// Non-leaf nodes only
-	r := rand.Intn(9)
+	r := rand.Intn(10)
 	switch r {
 	case 0:
 		return &OpPlus{}
@@ -300,6 +388,8 @@ func GetRandomNode() Node {
 		return &OpSine{}
 	case 8:
 		return &OpNoise{}
+	case 9:
+		return &OpLerp{}
 	}
 	panic("Get Random Node Failed")
 }
